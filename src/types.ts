@@ -13,12 +13,23 @@ export interface TicketBatch {
   quantity?: number;
 }
 
+export interface DrawnTicket {
+  id: string;
+  number: number;
+  drawnAt: string;
+  batchId: string;
+  batchLabel: string;
+  prize?: string;
+  claimed: boolean;
+}
+
 export interface Event {
   id: string;
   name: string;
   date: string;
   photo?: string; // base64
   batches: TicketBatch[];
+  draws: DrawnTicket[];
   createdAt: string;
 }
 

@@ -1,13 +1,17 @@
 import { useState, useCallback } from 'react';
 import { loadEvents, saveEvents } from '../lib/storage';
-import type { Event, TicketBatch } from '../types';
+import type { DrawnTicket, Event, TicketBatch } from '../types';
 
 function uid(): string {
   return Math.random().toString(36).slice(2, 10);
 }
 
+function normalise(e: Event): Event {
+  return { ...e, draws: e.draws ?? [] };
+}
+
 export function useEvents() {
-  const [events, setEvents] = useState<Event[]>(() => loadEvents());
+  const [events, setEvents] = useState<Event[]>(() => loadEvents().map(normalise));
 
   const persist = useCallback((next: Event[]) => {
     setEvents(next);
@@ -15,7 +19,7 @@ export function useEvents() {
   }, []);
 
   const createEvent = useCallback((name: string, date: string, photo?: string): Event => {
-    const event: Event = { id: uid(), name, date, photo, batches: [], createdAt: new Date().toISOString() };
+    const event: Event = { id: uid(), name, date, photo, batches: [], draws: [], createdAt: new Date().toISOString() };
     persist([event, ...events]);
     return event;
   }, [events, persist]);
@@ -40,5 +44,23 @@ export function useEvents() {
     ));
   }, [events, persist]);
 
-  return { events, createEvent, deleteEvent, addBatch, deleteBatch };
+  const addDraw = useCallback((eventId: string, draw: Omit<DrawnTicket, 'id' | 'drawnAt' | 'claimed'>) => {
+    const entry: DrawnTicket = { ...draw, id: uid(), drawnAt: new Date().toISOString(), claimed: false };
+    persist(events.map(e =>
+      e.id === eventId
+        ? { ...e, draws: [entry, ...e.draws] }
+        : e
+    ));
+    return entry;
+  }, [events, persist]);
+
+  const markClaimed = useCallback((eventId: string, drawId: string, claimed: boolean) => {
+    persist(events.map(e =>
+      e.id === eventId
+        ? { ...e, draws: e.draws.map(d => d.id === drawId ? { ...d, claimed } : d) }
+        : e
+    ));
+  }, [events, persist]);
+
+  return { events, createEvent, deleteEvent, addBatch, deleteBatch, addDraw, markClaimed };
 }

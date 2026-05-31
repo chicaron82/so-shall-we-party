@@ -1,40 +1,57 @@
 import { useState, useRef, useEffect } from 'react';
-import type { Event } from '../types';
+import type { DrawnTicket, Event } from '../types';
 import { lookupTicket } from '../lib/lookup';
 import { prizeBadgeClass, prizeEmoji } from '../lib/prizeStyle';
 
 interface Props {
   event: Event;
+  onAddDraw: (eventId: string, draw: Omit<DrawnTicket, 'id' | 'drawnAt' | 'claimed'>) => void;
+  onMarkClaimed: (eventId: string, drawId: string, claimed: boolean) => void;
   onBack: () => void;
 }
 
-export function DrawScreen({ event, onBack }: Props) {
-  const [input, setInput]   = useState('');
-  const [result, setResult] = useState<ReturnType<typeof lookupTicket> | null>(null);
-  const [shaking, setShaking] = useState(false);
+type FlashState = 'none' | 'nomatch';
+
+export function DrawScreen({ event, onAddDraw, onMarkClaimed, onBack }: Props) {
+  const [input, setInput]       = useState('');
+  const [flash, setFlash]       = useState<FlashState>('none');
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { inputRef.current?.focus(); }, []);
 
-  const handleLookup = () => {
-    if (!input.trim()) return;
-    const res = lookupTicket(event, input);
-    setResult(res);
-    if (!res.found) {
-      setShaking(true);
-      setTimeout(() => setShaking(false), 500);
+  const triggerFlash = () => {
+    setFlash('nomatch');
+    setTimeout(() => setFlash('none'), 1400);
+  };
+
+  const handleDraw = () => {
+    const trimmed = input.trim();
+    if (!trimmed) return;
+    const result = lookupTicket(event, trimmed);
+    setInput('');
+    if (result.found && result.batch) {
+      onAddDraw(event.id, {
+        number: result.matchedNumber!,
+        batchId: result.batch.id,
+        batchLabel: result.batch.label,
+        prize: result.batch.prize,
+      });
+    } else {
+      triggerFlash();
     }
+    setTimeout(() => inputRef.current?.focus(), 30);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') handleLookup();
+    if (e.key === 'Enter') handleDraw();
   };
 
-  const handleReset = () => {
-    setInput('');
-    setResult(null);
-    setTimeout(() => inputRef.current?.focus(), 50);
-  };
+  const draws = event.draws ?? [];
+  const unclaimed = draws.filter(d => !d.claimed).length;
+
+  const inputBorder = flash === 'nomatch'
+    ? 'border-red-500 bg-red-900/20'
+    : 'border-[#2a2b38] focus:border-purple-500';
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -42,102 +59,106 @@ export function DrawScreen({ event, onBack }: Props) {
       <div className="px-5 pt-12 pb-4 flex items-center gap-3">
         <button
           onClick={onBack}
-          className="w-9 h-9 flex items-center justify-center bg-[#16171f] border border-[#2a2b38] rounded-full text-slate-300 cursor-pointer"
+          className="w-9 h-9 flex items-center justify-center bg-[#16171f] border border-[#2a2b38] rounded-full text-slate-300 cursor-pointer shrink-0"
         >
           ‹
         </button>
-        <div>
-          <p className="text-xs text-slate-500">{event.name}</p>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-slate-500 truncate">{event.name}</p>
           <h1 className="text-lg font-bold text-slate-100">Draw Time 🎲</h1>
         </div>
+        {unclaimed > 0 && (
+          <span className="shrink-0 text-xs font-bold px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+            {unclaimed} outstanding
+          </span>
+        )}
       </div>
 
-      {/* Lookup */}
-      <div className="flex-1 flex flex-col px-5 pt-8">
-        <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">Enter Ticket Number</p>
-
-        <div className={`flex gap-2 transition-transform ${shaking ? 'animate-[shake_0.4s_ease]' : ''}`}>
-          <input
-            ref={inputRef}
-            type="number"
-            inputMode="numeric"
-            value={input}
-            onChange={e => { setInput(e.target.value); setResult(null); }}
-            onKeyDown={handleKeyDown}
-            placeholder="e.g. 45667"
-            className="flex-1 bg-[#1e1f2b] border border-[#2a2b38] focus:border-purple-500 rounded-2xl px-5 py-4 text-2xl font-bold text-slate-100 text-center focus:outline-none transition"
-          />
-        </div>
-
+      {/* Entry bar */}
+      <div className="px-5 pb-4 flex gap-2">
+        <input
+          ref={inputRef}
+          type="number"
+          inputMode="numeric"
+          value={input}
+          onChange={e => { setInput(e.target.value); setFlash('none'); }}
+          onKeyDown={handleKeyDown}
+          placeholder="Ticket number…"
+          className={`flex-1 bg-[#1e1f2b] border rounded-2xl px-5 py-4 text-2xl font-bold text-slate-100 text-center focus:outline-none transition ${inputBorder}`}
+        />
         <button
-          onClick={handleLookup}
+          onClick={handleDraw}
           disabled={!input.trim()}
-          className="mt-3 w-full py-4 bg-purple-600 hover:bg-purple-500 disabled:opacity-40 text-white font-bold rounded-2xl transition cursor-pointer"
+          className="px-5 py-4 bg-purple-600 hover:bg-purple-500 disabled:opacity-40 text-white font-bold rounded-2xl transition cursor-pointer shrink-0"
         >
-          Check
+          Draw
         </button>
+      </div>
 
-        {/* Result */}
-        {result && (
-          <div className={`mt-8 rounded-3xl border p-6 text-center transition-all ${
-            result.found
-              ? 'bg-gradient-to-br from-purple-900/40 to-cyan-900/30 border-purple-500/40'
-              : 'bg-[#1e1f2b] border-[#2a2b38]'
-          }`}>
-            {result.found ? (
-              <>
-                <div className="text-5xl mb-3 animate-bounce">🎉</div>
-                <p className="text-xl font-bold text-white mb-1">Winner!</p>
-                <p className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400 mb-3">
-                  #{result.matchedNumber}
-                </p>
-                <div className="bg-black/30 rounded-2xl px-4 py-3 space-y-1">
-                  <p className="text-sm font-bold text-slate-200">{result.batch?.label}</p>
-                  {result.batch?.prize && (
-                    <span className={`inline-flex items-center gap-1 text-xs font-semibold px-3 py-1 rounded-full border ${prizeBadgeClass(result.batch.prize)}`}>
-                      {prizeEmoji(result.batch.prize)} {result.batch.prize}
-                    </span>
-                  )}
-                  {result.batch?.type === 'range' && (
-                    <p className="text-xs text-slate-400">Range #{result.batch.rangeStart} – #{result.batch.rangeEnd}</p>
-                  )}
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="text-4xl mb-3">❌</div>
-                <p className="text-base font-bold text-slate-300">No match</p>
-                <p className="text-xs text-slate-500 mt-1">#{input} isn't in any batch for this event.</p>
-              </>
-            )}
+      {flash === 'nomatch' && (
+        <p className="text-center text-sm text-red-400 font-semibold pb-3 animate-pulse">
+          ❌ No match — keep drawing
+        </p>
+      )}
+
+      {/* Winners log */}
+      <div className="flex-1 px-4 space-y-2 pb-8">
+        {draws.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-40 gap-2">
+            <span className="text-3xl">🥁</span>
+            <p className="text-sm text-slate-500">No winners drawn yet.</p>
           </div>
-        )}
-
-        {result && (
-          <button
-            onClick={handleReset}
-            className="mt-4 w-full py-3 border border-[#2a2b38] hover:border-purple-700 text-slate-400 hover:text-slate-200 font-semibold text-sm rounded-2xl transition cursor-pointer"
-          >
-            Check Another Number
-          </button>
+        ) : (
+          <>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">
+              Winners — {draws.length} drawn
+            </p>
+            {draws.map(draw => (
+              <WinnerRow
+                key={draw.id}
+                draw={draw}
+                onToggleClaimed={() => onMarkClaimed(event.id, draw.id, !draw.claimed)}
+              />
+            ))}
+          </>
         )}
       </div>
+    </div>
+  );
+}
 
-      {/* Batch reference */}
-      <div className="px-5 pt-6 pb-10">
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">Batches</p>
-        <div className="space-y-1">
-          {event.batches.map(b => (
-            <div key={b.id} className="flex items-center justify-between text-xs text-slate-500">
-              <span className="font-medium text-slate-400">{b.label}</span>
-              <span>
-                {b.type === 'range' ? `#${b.rangeStart}–${b.rangeEnd}` : `Card #${b.number}`}
-                {b.prize && <span className="ml-2">{prizeEmoji(b.prize)} {b.prize}</span>}
-              </span>
-            </div>
-          ))}
+function WinnerRow({ draw, onToggleClaimed }: { draw: DrawnTicket; onToggleClaimed: () => void }) {
+  const time = new Date(draw.drawnAt).toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit' });
+
+  return (
+    <div className={`flex items-center gap-3 rounded-2xl border px-4 py-3 transition ${
+      draw.claimed
+        ? 'bg-[#13141a] border-[#1e1f2b] opacity-60'
+        : 'bg-[#16171f] border-[#2a2b38]'
+    }`}>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className={`text-lg font-black ${draw.claimed ? 'text-slate-500' : 'text-white'}`}>
+            #{draw.number}
+          </span>
+          {draw.prize && (
+            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${prizeBadgeClass(draw.prize)}`}>
+              {prizeEmoji(draw.prize)} {draw.prize}
+            </span>
+          )}
         </div>
+        <p className="text-xs text-slate-500 mt-0.5 truncate">{draw.batchLabel} · {time}</p>
       </div>
+      <button
+        onClick={onToggleClaimed}
+        className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-xl border transition cursor-pointer ${
+          draw.claimed
+            ? 'border-green-800 text-green-600 hover:border-green-600 hover:text-green-400'
+            : 'border-purple-700 text-purple-300 hover:border-purple-500 hover:bg-purple-900/20'
+        }`}
+      >
+        {draw.claimed ? '✓ Claimed' : 'Claim'}
+      </button>
     </div>
   );
 }

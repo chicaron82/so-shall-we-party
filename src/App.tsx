@@ -8,7 +8,7 @@ import type { Event } from './types';
 type Screen = 'home' | 'event' | 'draw';
 
 export default function App() {
-  const { events, createEvent, addBatch, deleteBatch } = useEvents();
+  const { events, createEvent, addBatch, deleteBatch, addDraw, markClaimed } = useEvents();
   const [screen, setScreen]           = useState<Screen>('home');
   const [activeEvent, setActiveEvent] = useState<Event | null>(null);
 
@@ -43,6 +43,8 @@ export default function App() {
       {screen === 'draw' && currentEvent && (
         <DrawScreen
           event={currentEvent}
+          onAddDraw={addDraw}
+          onMarkClaimed={markClaimed}
           onBack={() => setScreen('event')}
         />
       )}
