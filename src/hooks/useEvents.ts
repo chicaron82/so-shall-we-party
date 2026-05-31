@@ -24,6 +24,10 @@ export function useEvents() {
     return event;
   }, [events, persist]);
 
+  const updateEvent = useCallback((id: string, patch: Partial<Pick<Event, 'name' | 'date' | 'photo'>>) => {
+    persist(events.map(e => e.id === id ? { ...e, ...patch } : e));
+  }, [events, persist]);
+
   const deleteEvent = useCallback((id: string) => {
     persist(events.filter(e => e.id !== id));
   }, [events, persist]);
@@ -32,6 +36,14 @@ export function useEvents() {
     persist(events.map(e =>
       e.id === eventId
         ? { ...e, batches: [...e.batches, { ...batch, id: uid() }] }
+        : e
+    ));
+  }, [events, persist]);
+
+  const updateBatch = useCallback((eventId: string, batchId: string, patch: Omit<TicketBatch, 'id'>) => {
+    persist(events.map(e =>
+      e.id === eventId
+        ? { ...e, batches: e.batches.map(b => b.id === batchId ? { ...patch, id: batchId } : b) }
         : e
     ));
   }, [events, persist]);
@@ -62,5 +74,5 @@ export function useEvents() {
     ));
   }, [events, persist]);
 
-  return { events, createEvent, deleteEvent, addBatch, deleteBatch, addDraw, markClaimed };
+  return { events, createEvent, updateEvent, deleteEvent, addBatch, updateBatch, deleteBatch, addDraw, markClaimed };
 }

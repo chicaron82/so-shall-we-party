@@ -8,7 +8,10 @@ import type { Event } from './types';
 type Screen = 'home' | 'event' | 'draw';
 
 export default function App() {
-  const { events, createEvent, addBatch, deleteBatch, addDraw, markClaimed } = useEvents();
+  const {
+    events, createEvent, updateEvent, deleteEvent,
+    addBatch, updateBatch, deleteBatch, addDraw, markClaimed,
+  } = useEvents();
   const [screen, setScreen]           = useState<Screen>('home');
   const [activeEvent, setActiveEvent] = useState<Event | null>(null);
 
@@ -35,7 +38,10 @@ export default function App() {
         <EventScreen
           event={currentEvent}
           onAddBatch={addBatch}
+          onUpdateBatch={updateBatch}
           onDeleteBatch={deleteBatch}
+          onUpdateEvent={updateEvent}
+          onDeleteEvent={deleteEvent}
           onDraw={() => setScreen('draw')}
           onBack={() => setScreen('home')}
         />

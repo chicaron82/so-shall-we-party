@@ -2,7 +2,8 @@ import { useState } from 'react';
 import type { BatchType, TicketBatch } from '../types';
 
 interface Props {
-  onAdd: (batch: Omit<TicketBatch, 'id'>) => void;
+  initial?: TicketBatch;
+  onSubmit: (batch: Omit<TicketBatch, 'id'>) => void;
   onClose: () => void;
 }
 
@@ -24,17 +25,18 @@ const PRIZE_ACTIVE: Record<string, string> = {
   '50/50':         'bg-pink-700 text-white border-pink-500',
 };
 
-export function BatchFormModal({ onAdd, onClose }: Props) {
-  const [type, setType]       = useState<BatchType>('range');
-  const [label, setLabel]     = useState('');
-  const [prize, setPrize]     = useState('');
-  const [rangeStart, setStart] = useState('');
-  const [rangeEnd, setEnd]     = useState('');
-  const [cardNum, setCardNum]  = useState('');
-  const [qty, setQty]          = useState('');
+export function BatchFormModal({ initial, onSubmit, onClose }: Props) {
+  const editing = !!initial;
+  const [type, setType]       = useState<BatchType>(initial?.type ?? 'range');
+  const [label, setLabel]     = useState(initial?.label ?? '');
+  const [prize, setPrize]     = useState(initial?.prize ?? '');
+  const [rangeStart, setStart] = useState(initial?.rangeStart != null ? String(initial.rangeStart) : '');
+  const [rangeEnd, setEnd]     = useState(initial?.rangeEnd != null ? String(initial.rangeEnd) : '');
+  const [cardNum, setCardNum]  = useState(initial?.number != null ? String(initial.number) : '');
+  const [qty, setQty]          = useState(initial?.quantity != null ? String(initial.quantity) : '');
   const [error, setError]      = useState('');
 
-  const handleAdd = () => {
+  const handleSubmit = () => {
     setError('');
     if (!label.trim()) { setError('Label is required.'); return; }
 
@@ -43,12 +45,12 @@ export function BatchFormModal({ onAdd, onClose }: Props) {
       const end   = parseInt(rangeEnd, 10);
       if (isNaN(start) || isNaN(end)) { setError('Enter valid start and end numbers.'); return; }
       if (end < start) { setError('End must be ≥ start.'); return; }
-      onAdd({ type, label: label.trim(), prize: prize || undefined, rangeStart: start, rangeEnd: end });
+      onSubmit({ type, label: label.trim(), prize: prize || undefined, rangeStart: start, rangeEnd: end });
     } else {
       const number   = parseInt(cardNum, 10);
       const quantity = parseInt(qty, 10);
       if (isNaN(number)) { setError('Enter a valid card number.'); return; }
-      onAdd({ type, label: label.trim(), prize: prize || undefined, number, quantity: isNaN(quantity) ? 1 : quantity });
+      onSubmit({ type, label: label.trim(), prize: prize || undefined, number, quantity: isNaN(quantity) ? 1 : quantity });
     }
     onClose();
   };
@@ -62,7 +64,7 @@ export function BatchFormModal({ onAdd, onClose }: Props) {
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-bold text-slate-100">Add Ticket Batch</h2>
+          <h2 className="text-base font-bold text-slate-100">{editing ? 'Edit Batch' : 'Add Ticket Batch'}</h2>
           <button onClick={onClose} className="text-slate-500 hover:text-slate-300 text-xl cursor-pointer">✕</button>
         </div>
 
@@ -143,10 +145,10 @@ export function BatchFormModal({ onAdd, onClose }: Props) {
         {error && <p className="text-xs text-red-400">{error}</p>}
 
         <button
-          onClick={handleAdd}
+          onClick={handleSubmit}
           className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold text-sm rounded-xl transition cursor-pointer"
         >
-          Add Batch
+          {editing ? 'Save Changes' : 'Add Batch'}
         </button>
       </div>
     </div>

@@ -1,14 +1,17 @@
 import { useState, useRef } from 'react';
+import type { Event } from '../types';
 
 interface Props {
-  onCreate: (name: string, date: string, photo?: string) => void;
+  initial?: Event;
+  onSubmit: (name: string, date: string, photo?: string) => void;
   onClose: () => void;
 }
 
-export function NewEventModal({ onCreate, onClose }: Props) {
-  const [name, setName]   = useState('');
-  const [date, setDate]   = useState('');
-  const [photo, setPhoto] = useState<string | undefined>();
+export function EventFormModal({ initial, onSubmit, onClose }: Props) {
+  const editing = !!initial;
+  const [name, setName]   = useState(initial?.name ?? '');
+  const [date, setDate]   = useState(initial?.date ?? '');
+  const [photo, setPhoto] = useState<string | undefined>(initial?.photo);
   const [error, setError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -20,10 +23,10 @@ export function NewEventModal({ onCreate, onClose }: Props) {
     reader.readAsDataURL(file);
   };
 
-  const handleCreate = () => {
+  const handleSubmit = () => {
     if (!name.trim()) { setError('Event name is required.'); return; }
     if (!date)        { setError('Date is required.'); return; }
-    onCreate(name.trim(), date, photo);
+    onSubmit(name.trim(), date, photo);
     onClose();
   };
 
@@ -36,7 +39,7 @@ export function NewEventModal({ onCreate, onClose }: Props) {
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-bold text-slate-100">New Event</h2>
+          <h2 className="text-base font-bold text-slate-100">{editing ? 'Edit Event' : 'New Event'}</h2>
           <button onClick={onClose} className="text-slate-500 hover:text-slate-300 text-xl cursor-pointer">✕</button>
         </div>
 
@@ -70,10 +73,10 @@ export function NewEventModal({ onCreate, onClose }: Props) {
         {error && <p className="text-xs text-red-400">{error}</p>}
 
         <button
-          onClick={handleCreate}
+          onClick={handleSubmit}
           className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold text-sm rounded-xl transition cursor-pointer"
         >
-          Create Event
+          {editing ? 'Save Changes' : 'Create Event'}
         </button>
       </div>
     </div>

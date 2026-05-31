@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Event } from '../types';
-import { NewEventModal } from './NewEventModal';
+import { EventFormModal } from './EventFormModal';
 
 interface Props {
   events: Event[];
@@ -71,7 +71,7 @@ export function HomeScreen({ events, onCreate, onSelect }: Props) {
         </button>
       </div>
 
-      {showNew && <NewEventModal onCreate={handleCreate} onClose={() => setShowNew(false)} />}
+      {showNew && <EventFormModal onSubmit={handleCreate} onClose={() => setShowNew(false)} />}
     </div>
   );
 }

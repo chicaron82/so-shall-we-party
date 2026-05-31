@@ -1,12 +1,17 @@
 import { useState } from 'react';
 import type { Event, TicketBatch } from '../types';
 import { BatchFormModal } from './BatchFormModal';
+import { EventFormModal } from './EventFormModal';
+import { ConfirmDialog } from './ConfirmDialog';
 import { prizeBadgeClass, prizeEmoji } from '../lib/prizeStyle';
 
 interface Props {
   event: Event;
   onAddBatch: (eventId: string, batch: Omit<TicketBatch, 'id'>) => void;
+  onUpdateBatch: (eventId: string, batchId: string, patch: Omit<TicketBatch, 'id'>) => void;
   onDeleteBatch: (eventId: string, batchId: string) => void;
+  onUpdateEvent: (id: string, patch: Partial<Pick<Event, 'name' | 'date' | 'photo'>>) => void;
+  onDeleteEvent: (id: string) => void;
   onDraw: () => void;
   onBack: () => void;
 }
@@ -17,8 +22,14 @@ function batchSummary(b: TicketBatch): string {
   return `Card #${b.number}${q}`;
 }
 
-export function EventScreen({ event, onAddBatch, onDeleteBatch, onDraw, onBack }: Props) {
-  const [showBatch, setShowBatch] = useState(false);
+export function EventScreen({
+  event, onAddBatch, onUpdateBatch, onDeleteBatch, onUpdateEvent, onDeleteEvent, onDraw, onBack,
+}: Props) {
+  const [showAddBatch, setShowAddBatch]       = useState(false);
+  const [editingBatch, setEditingBatch]       = useState<TicketBatch | null>(null);
+  const [deletingBatch, setDeletingBatch]     = useState<TicketBatch | null>(null);
+  const [showEditEvent, setShowEditEvent]     = useState(false);
+  const [confirmDelEvent, setConfirmDelEvent] = useState(false);
 
   const dateLabel = new Date(event.date + 'T12:00:00').toLocaleDateString('en-CA', {
     weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
@@ -42,6 +53,12 @@ export function EventScreen({ event, onAddBatch, onDeleteBatch, onDraw, onBack }
         >
           ‹
         </button>
+        <button
+          onClick={() => setShowEditEvent(true)}
+          className="absolute top-12 right-4 h-9 px-3 flex items-center gap-1 bg-black/50 rounded-full text-white text-xs font-semibold cursor-pointer"
+        >
+          ✏️ Edit
+        </button>
         <div className="absolute bottom-4 left-5 right-5">
           <h1 className="text-2xl font-bold text-white drop-shadow">{event.name}</h1>
           <p className="text-xs text-slate-300">{dateLabel}</p>
@@ -53,7 +70,7 @@ export function EventScreen({ event, onAddBatch, onDeleteBatch, onDraw, onBack }
         <div className="flex items-center justify-between mb-3">
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Ticket Batches</p>
           <button
-            onClick={() => setShowBatch(true)}
+            onClick={() => setShowAddBatch(true)}
             className="text-xs font-semibold text-purple-400 hover:text-purple-300 cursor-pointer"
           >
             + Add Batch
@@ -71,7 +88,10 @@ export function EventScreen({ event, onAddBatch, onDeleteBatch, onDraw, onBack }
               key={batch.id}
               className="flex items-center justify-between bg-[#16171f] border border-[#2a2b38] rounded-2xl px-4 py-3"
             >
-              <div>
+              <button
+                onClick={() => setEditingBatch(batch)}
+                className="flex-1 text-left cursor-pointer min-w-0"
+              >
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-bold text-slate-100">{batch.label}</p>
                   {batch.prize && (
@@ -81,16 +101,27 @@ export function EventScreen({ event, onAddBatch, onDeleteBatch, onDraw, onBack }
                   )}
                 </div>
                 <p className="text-xs text-slate-500 mt-0.5">{batchSummary(batch)}</p>
-              </div>
+              </button>
               <button
-                onClick={() => onDeleteBatch(event.id, batch.id)}
-                className="text-slate-600 hover:text-red-400 transition text-lg cursor-pointer ml-3"
+                onClick={() => setDeletingBatch(batch)}
+                aria-label={`Delete ${batch.label}`}
+                className="text-slate-600 hover:text-red-400 transition text-lg cursor-pointer ml-3 shrink-0"
               >
                 ×
               </button>
             </div>
           ))
         )}
+
+        {/* Delete event */}
+        <div className="pt-6 pb-2 flex justify-center">
+          <button
+            onClick={() => setConfirmDelEvent(true)}
+            className="text-xs font-medium text-slate-600 hover:text-red-400 transition cursor-pointer"
+          >
+            Delete this event
+          </button>
+        </div>
       </div>
 
       {/* Draw CTA */}
@@ -105,10 +136,42 @@ export function EventScreen({ event, onAddBatch, onDeleteBatch, onDraw, onBack }
         </div>
       )}
 
-      {showBatch && (
+      {/* Modals */}
+      {showAddBatch && (
         <BatchFormModal
-          onAdd={batch => onAddBatch(event.id, batch)}
-          onClose={() => setShowBatch(false)}
+          onSubmit={batch => onAddBatch(event.id, batch)}
+          onClose={() => setShowAddBatch(false)}
+        />
+      )}
+      {editingBatch && (
+        <BatchFormModal
+          initial={editingBatch}
+          onSubmit={patch => onUpdateBatch(event.id, editingBatch.id, patch)}
+          onClose={() => setEditingBatch(null)}
+        />
+      )}
+      {showEditEvent && (
+        <EventFormModal
+          initial={event}
+          onSubmit={(name, date, photo) => onUpdateEvent(event.id, { name, date, photo })}
+          onClose={() => setShowEditEvent(false)}
+        />
+      )}
+      {deletingBatch && (
+        <ConfirmDialog
+          title="Delete batch?"
+          message={`"${deletingBatch.label}" (${batchSummary(deletingBatch)}) will be removed.`}
+          onConfirm={() => { onDeleteBatch(event.id, deletingBatch.id); setDeletingBatch(null); }}
+          onCancel={() => setDeletingBatch(null)}
+        />
+      )}
+      {confirmDelEvent && (
+        <ConfirmDialog
+          title="Delete event?"
+          message={`"${event.name}" and all its batches and draw history will be permanently removed.`}
+          confirmLabel="Delete Event"
+          onConfirm={() => { onDeleteEvent(event.id); onBack(); }}
+          onCancel={() => setConfirmDelEvent(false)}
         />
       )}
     </div>
