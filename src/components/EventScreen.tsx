@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Event, TicketBatch } from '../types';
 import { BatchFormModal } from './BatchFormModal';
+import { prizeBadgeClass, prizeEmoji } from '../lib/prizeStyle';
 
 interface Props {
   event: Event;
@@ -74,8 +75,8 @@ export function EventScreen({ event, onAddBatch, onDeleteBatch, onDraw, onBack }
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-bold text-slate-100">{batch.label}</p>
                   {batch.prize && (
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                      {batch.prize}
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${prizeBadgeClass(batch.prize)}`}>
+                      {prizeEmoji(batch.prize)} {batch.prize}
                     </span>
                   )}
                 </div>

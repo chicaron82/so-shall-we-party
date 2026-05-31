@@ -6,6 +6,24 @@ interface Props {
   onClose: () => void;
 }
 
+const PRIZE_PRESETS = [
+  { label: 'Regular',       emoji: '🎟️',  style: 'border-slate-600 text-slate-300 hover:border-slate-400'  },
+  { label: 'Grand Prize',   emoji: '🏆',  style: 'border-amber-600 text-amber-300 hover:border-amber-400'   },
+  { label: 'Door Prize',    emoji: '🚪',  style: 'border-green-700 text-green-300 hover:border-green-500'   },
+  { label: 'Golden Ticket', emoji: '✨',  style: 'border-yellow-500 text-yellow-300 hover:border-yellow-400' },
+  { label: 'Booze Wagon',   emoji: '🍾',  style: 'border-cyan-700 text-cyan-300 hover:border-cyan-500'      },
+  { label: '50/50',         emoji: '🎲',  style: 'border-pink-700 text-pink-300 hover:border-pink-500'      },
+] as const;
+
+const PRIZE_ACTIVE: Record<string, string> = {
+  'Regular':       'bg-slate-700 text-white border-slate-500',
+  'Grand Prize':   'bg-amber-600 text-white border-amber-500',
+  'Door Prize':    'bg-green-700 text-white border-green-500',
+  'Golden Ticket': 'bg-yellow-500 text-black border-yellow-400',
+  'Booze Wagon':   'bg-cyan-700 text-white border-cyan-500',
+  '50/50':         'bg-pink-700 text-white border-pink-500',
+};
+
 export function BatchFormModal({ onAdd, onClose }: Props) {
   const [type, setType]       = useState<BatchType>('range');
   const [label, setLabel]     = useState('');
@@ -25,12 +43,12 @@ export function BatchFormModal({ onAdd, onClose }: Props) {
       const end   = parseInt(rangeEnd, 10);
       if (isNaN(start) || isNaN(end)) { setError('Enter valid start and end numbers.'); return; }
       if (end < start) { setError('End must be ≥ start.'); return; }
-      onAdd({ type, label: label.trim(), prize: prize.trim() || undefined, rangeStart: start, rangeEnd: end });
+      onAdd({ type, label: label.trim(), prize: prize || undefined, rangeStart: start, rangeEnd: end });
     } else {
       const number   = parseInt(cardNum, 10);
       const quantity = parseInt(qty, 10);
       if (isNaN(number)) { setError('Enter a valid card number.'); return; }
-      onAdd({ type, label: label.trim(), prize: prize.trim() || undefined, number, quantity: isNaN(quantity) ? 1 : quantity });
+      onAdd({ type, label: label.trim(), prize: prize || undefined, number, quantity: isNaN(quantity) ? 1 : quantity });
     }
     onClose();
   };
@@ -76,15 +94,26 @@ export function BatchFormModal({ onAdd, onClose }: Props) {
           />
         </div>
 
-        {/* Prize (optional) */}
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-slate-400">Prize <span className="text-slate-600">(optional)</span></label>
-          <input
-            className={inputCls}
-            placeholder='e.g. Grand Prize, 2nd Prize'
-            value={prize}
-            onChange={e => setPrize(e.target.value)}
-          />
+        {/* Prize presets */}
+        <div className="space-y-2">
+          <label className="text-xs font-medium text-slate-400">Prize Type <span className="text-slate-600">(optional)</span></label>
+          <div className="grid grid-cols-3 gap-2">
+            {PRIZE_PRESETS.map(p => {
+              const active = prize === p.label;
+              return (
+                <button
+                  key={p.label}
+                  type="button"
+                  onClick={() => setPrize(active ? '' : p.label)}
+                  className={`py-2 px-2 rounded-xl text-xs font-semibold border transition cursor-pointer ${
+                    active ? PRIZE_ACTIVE[p.label] : p.style
+                  }`}
+                >
+                  {p.emoji} {p.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {type === 'range' ? (

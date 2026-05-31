@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import type { Event } from '../types';
 import { lookupTicket } from '../lib/lookup';
+import { prizeBadgeClass, prizeEmoji } from '../lib/prizeStyle';
 
 interface Props {
   event: Event;
@@ -93,7 +94,9 @@ export function DrawScreen({ event, onBack }: Props) {
                 <div className="bg-black/30 rounded-2xl px-4 py-3 space-y-1">
                   <p className="text-sm font-bold text-slate-200">{result.batch?.label}</p>
                   {result.batch?.prize && (
-                    <p className="text-sm font-semibold text-amber-400">🏆 {result.batch.prize}</p>
+                    <span className={`inline-flex items-center gap-1 text-xs font-semibold px-3 py-1 rounded-full border ${prizeBadgeClass(result.batch.prize)}`}>
+                      {prizeEmoji(result.batch.prize)} {result.batch.prize}
+                    </span>
                   )}
                   {result.batch?.type === 'range' && (
                     <p className="text-xs text-slate-400">Range #{result.batch.rangeStart} – #{result.batch.rangeEnd}</p>
@@ -129,7 +132,7 @@ export function DrawScreen({ event, onBack }: Props) {
               <span className="font-medium text-slate-400">{b.label}</span>
               <span>
                 {b.type === 'range' ? `#${b.rangeStart}–${b.rangeEnd}` : `Card #${b.number}`}
-                {b.prize && <span className="ml-2 text-amber-500">{b.prize}</span>}
+                {b.prize && <span className="ml-2">{prizeEmoji(b.prize)} {b.prize}</span>}
               </span>
             </div>
           ))}
