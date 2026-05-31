@@ -16,3 +16,38 @@ body {
   font-family: system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-10px); }
+  40%       { transform: translateX(10px); }
+  60%       { transform: translateX(-6px); }
+  80%       { transform: translateX(4px); }
+}
+
+@keyframes neon-pulse-gold {
+  0%, 100% { box-shadow: 0 0 6px #fbbf2440, 0 0 12px #fbbf2420; }
+  50%       { box-shadow: 0 0 18px #fbbf2480, 0 0 36px #fbbf2440; }
+}
+
+@keyframes neon-pulse-orange {
+  0%, 100% { box-shadow: 0 0 8px #f9731640, 0 0 16px #f9731620; }
+  50%       { box-shadow: 0 0 24px #f9731680, 0 0 48px #f9731440; }
+}
+
+@keyframes neon-pulse-green {
+  0%, 100% { box-shadow: 0 0 10px #22c55e60, 0 0 20px #22c55e30; }
+  50%       { box-shadow: 0 0 30px #22c55eaa, 0 0 60px #22c55e50; }
+}
+
+@keyframes winner-pop {
+  0%   { transform: scale(0.92); opacity: 0; }
+  60%  { transform: scale(1.04); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+.animate-shake          { animation: shake 0.45s ease; }
+.animate-neon-gold      { animation: neon-pulse-gold 1.4s ease-in-out infinite; }
+.animate-neon-orange    { animation: neon-pulse-orange 0.9s ease-in-out infinite; }
+.animate-neon-green     { animation: neon-pulse-green 0.7s ease-in-out infinite; }
+.animate-winner-pop     { animation: winner-pop 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
