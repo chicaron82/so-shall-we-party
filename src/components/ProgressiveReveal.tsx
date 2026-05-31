@@ -11,10 +11,16 @@ interface Props {
 }
 
 const STAGE_CONFIG = {
-  idle:       { border: 'border-[#2a2b38]',    glow: '',                      label: '',                           labelColor: '' },
-  eliminated: { border: 'border-red-500',       glow: '',                      label: '✗  Not a winner — keep drawing', labelColor: 'text-red-400' },
-  possible:   { border: 'border-yellow-500/70', glow: 'animate-neon-gold',    label: "You're in it... 🎟️",           labelColor: 'text-yellow-400' },
+  idle:       { border: 'border-[#2a2b38]',    glow: '',               label: '',                               labelColor: '' },
+  eliminated: { border: 'border-red-500',       glow: '',               label: '✗  Not a winner — keep drawing', labelColor: 'text-red-400' },
+  possible:   { border: 'border-yellow-500/70', glow: 'animate-neon-gold', label: "You're in it... 🎟️",          labelColor: 'text-yellow-400' },
 } as const;
+
+function nearMissLabel(distance: number): string {
+  if (distance === 1) return 'SO close!! Missed it by 1 😭';
+  if (distance <= 3)  return `Almost had it... missed by ${distance} 🤏`;
+  return `Just missed — ${distance} away`;
+}
 
 function identifiedConfig(digitsLeft: number, guaranteed: boolean) {
   if (guaranteed)    return { border: 'border-green-400',  glow: 'animate-neon-green',  label: "It's basically yours! 🔥🔥🔥", labelColor: 'text-green-300' };
@@ -30,8 +36,8 @@ export function ProgressiveReveal({ input, stage, onChange, onConfirmWinner, onN
   useEffect(() => { inputRef.current?.focus(); }, []);
 
   useEffect(() => {
-    if (stage.type === 'eliminated' && input) {
-      setShaking(true);
+    if ((stage.type === 'eliminated' || stage.type === 'near-miss') && input) {
+      if (stage.type === 'eliminated') setShaking(true);
       const t = setTimeout(() => setShaking(false), 500);
       return () => clearTimeout(t);
     }
@@ -51,6 +57,8 @@ export function ProgressiveReveal({ input, stage, onChange, onConfirmWinner, onN
     ? identifiedConfig(stage.digitsLeft, stage.guaranteed)
     : stage.type === 'winner'
     ? { border: 'border-green-400', glow: 'animate-neon-green', label: '', labelColor: '' }
+    : stage.type === 'near-miss'
+    ? { border: 'border-amber-500', glow: '', label: nearMissLabel(stage.distance), labelColor: 'text-amber-400' }
     : STAGE_CONFIG[stage.type as keyof typeof STAGE_CONFIG] ?? STAGE_CONFIG.idle;
 
   const batch = stage.type === 'identified' || stage.type === 'winner' ? stage.batch : null;

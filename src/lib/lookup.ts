@@ -24,6 +24,7 @@ export function lookupTicket(event: Event, input: string): LookupResult {
 export type DrawStage =
   | { type: 'idle' }
   | { type: 'eliminated' }
+  | { type: 'near-miss'; distance: number }
   | { type: 'possible' }
   | { type: 'identified'; batch: TicketBatch; digitsLeft: number; guaranteed: boolean }
   | { type: 'winner'; batch: TicketBatch; number: number }
@@ -81,7 +82,21 @@ export function getDrawStage(input: string, event: Event): DrawStage {
 
   // Prefix scan
   const candidates = event.batches.filter(b => prefixCanMatch(prefix, b));
-  if (candidates.length === 0) return { type: 'eliminated' };
+
+  if (candidates.length === 0) {
+    // Near-miss: complete number entry within 5 of a range boundary
+    if (!isNaN(num)) {
+      for (const batch of event.batches) {
+        if (batch.type !== 'range') continue;
+        if (prefix.length !== expectedDigits(batch)) continue;
+        const start = batch.rangeStart ?? 0;
+        const end   = batch.rangeEnd   ?? 0;
+        const dist  = num < start ? start - num : num > end ? num - end : 0;
+        if (dist > 0 && dist <= 5) return { type: 'near-miss', distance: dist };
+      }
+    }
+    return { type: 'eliminated' };
+  }
   if (candidates.length > 1)   return { type: 'possible' };
 
   const batch = candidates[0];
