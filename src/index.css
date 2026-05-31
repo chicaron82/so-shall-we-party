@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+@theme {
+  --color-neon-purple: #c084fc;
+  --color-neon-cyan: #22d3ee;
+  --color-neon-pink: #f472b6;
+  --color-neon-gold: #fbbf24;
+  --color-party-bg: #0d0d14;
+  --color-party-surface: #16171f;
+  --color-party-border: #2a2b38;
+}
+
+body {
+  background: #0d0d14;
+  color: #e2e8f0;
+  font-family: system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
