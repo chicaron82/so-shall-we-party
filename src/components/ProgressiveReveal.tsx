@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect } from 'react';
 import type { DrawStage } from '../lib/lookup';
 import { prizeBadgeClass, prizeEmoji } from '../lib/prizeStyle';
 
@@ -30,22 +30,13 @@ function identifiedConfig(digitsLeft: number, guaranteed: boolean) {
 
 export function ProgressiveReveal({ input, stage, onChange, onConfirmWinner, onNoMatch }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [shaking, setShaking] = useState(false);
-  const [winnerVisible, setWinnerVisible] = useState(false);
 
   useEffect(() => { inputRef.current?.focus(); }, []);
 
-  useEffect(() => {
-    if ((stage.type === 'eliminated' || stage.type === 'near-miss') && input) {
-      if (stage.type === 'eliminated') setShaking(true);
-      const t = setTimeout(() => setShaking(false), 500);
-      return () => clearTimeout(t);
-    }
-  }, [stage.type, input]);
-
-  useEffect(() => {
-    setWinnerVisible(stage.type === 'winner');
-  }, [stage.type]);
+  // Both derive straight from stage — no state, no effects. The CSS animations
+  // (shake / winner-pop) play on class-apply and element-mount respectively.
+  const shaking = stage.type === 'eliminated' && !!input;
+  const winnerVisible = stage.type === 'winner';
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key !== 'Enter') return;
@@ -137,10 +128,7 @@ export function ProgressiveReveal({ input, stage, onChange, onConfirmWinner, onN
       {/* Draw / no-match button — shown when no winner state */}
       {!winnerVisible && (
         <button
-          onClick={() => {
-            if (stage.type === 'winner') { onConfirmWinner(); }
-            else if (input.trim())       { onNoMatch(); }
-          }}
+          onClick={() => { if (input.trim()) onNoMatch(); }}
           disabled={!input.trim()}
           className="w-full py-4 bg-purple-600 hover:bg-purple-500 disabled:opacity-30 text-white font-bold rounded-2xl transition cursor-pointer"
         >
