@@ -10,7 +10,7 @@ type Screen = 'home' | 'event' | 'draw';
 export default function App() {
   const {
     events, createEvent, updateEvent, deleteEvent,
-    addBatch, updateBatch, deleteBatch, addDraw, markClaimed,
+    addBatch, updateBatch, deleteBatch, addDraw, markClaimed, importEvents,
   } = useEvents();
   const [screen, setScreen]           = useState<Screen>('home');
   const [activeEvent, setActiveEvent] = useState<Event | null>(null);
@@ -32,6 +32,7 @@ export default function App() {
           events={events}
           onCreate={createEvent}
           onSelect={selectEvent}
+          onImport={importEvents}
         />
       )}
       {screen === 'event' && currentEvent && (

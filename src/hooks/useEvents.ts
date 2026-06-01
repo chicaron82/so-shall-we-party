@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { loadEvents, saveEvents } from '../lib/storage';
+import { mergeEvents } from '../lib/backup';
 import type { DrawnTicket, Event, TicketBatch } from '../types';
 
 function uid(): string {
@@ -81,5 +82,9 @@ export function useEvents() {
     ));
   }, [events, persist]);
 
-  return { events, createEvent, updateEvent, deleteEvent, addBatch, updateBatch, deleteBatch, addDraw, markClaimed };
+  const importEvents = useCallback((incoming: Event[]) => {
+    persist(mergeEvents(events, incoming));
+  }, [events, persist]);
+
+  return { events, createEvent, updateEvent, deleteEvent, addBatch, updateBatch, deleteBatch, addDraw, markClaimed, importEvents };
 }

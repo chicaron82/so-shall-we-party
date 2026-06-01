@@ -1,15 +1,18 @@
 import { useState } from 'react';
 import type { Event } from '../types';
 import { EventFormModal } from './EventFormModal';
+import { BackupSheet } from './BackupSheet';
 
 interface Props {
   events: Event[];
   onCreate: (name: string, date: string, photo?: string) => Event;
   onSelect: (event: Event) => void;
+  onImport: (incoming: Event[]) => void;
 }
 
-export function HomeScreen({ events, onCreate, onSelect }: Props) {
+export function HomeScreen({ events, onCreate, onSelect, onImport }: Props) {
   const [showNew, setShowNew] = useState(false);
+  const [showBackup, setShowBackup] = useState(false);
 
   const handleCreate = (name: string, date: string, photo?: string) => {
     const event = onCreate(name, date, photo);
@@ -19,9 +22,17 @@ export function HomeScreen({ events, onCreate, onSelect }: Props) {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <div className="px-5 pt-12 pb-6">
-        <p className="text-xs font-semibold text-purple-400 tracking-widest uppercase">So Shall We Party</p>
-        <h1 className="text-2xl font-bold text-slate-100 mt-1">Events</h1>
+      <div className="px-5 pt-12 pb-6 flex items-start justify-between">
+        <div>
+          <p className="text-xs font-semibold text-purple-400 tracking-widest uppercase">So Shall We Party</p>
+          <h1 className="text-2xl font-bold text-slate-100 mt-1">Events</h1>
+        </div>
+        <button
+          onClick={() => setShowBackup(true)}
+          className="mt-1 h-9 px-3 flex items-center gap-1 bg-[#16171f] border border-[#2a2b38] rounded-full text-slate-300 text-xs font-semibold hover:border-purple-700 transition cursor-pointer"
+        >
+          💾 Backup
+        </button>
       </div>
 
       {/* Event list */}
@@ -72,6 +83,7 @@ export function HomeScreen({ events, onCreate, onSelect }: Props) {
       </div>
 
       {showNew && <EventFormModal onSubmit={handleCreate} onClose={() => setShowNew(false)} />}
+      {showBackup && <BackupSheet events={events} onImport={onImport} onClose={() => setShowBackup(false)} />}
     </div>
   );
 }

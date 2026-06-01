@@ -5,6 +5,8 @@ import { EventFormModal } from './EventFormModal';
 import { ConfirmDialog } from './ConfirmDialog';
 import { prizeBadgeClass, prizeEmoji } from '../lib/prizeStyle';
 import { batchDisplayName } from '../lib/batchName';
+import { serializeEvents } from '../lib/backup';
+import { downloadJson, copyToClipboard, backupFilename } from '../lib/download';
 
 interface Props {
   event: Event;
@@ -30,6 +32,15 @@ export function EventScreen({
   const [deletingBatch, setDeletingBatch]     = useState<TicketBatch | null>(null);
   const [showEditEvent, setShowEditEvent]     = useState(false);
   const [confirmDelEvent, setConfirmDelEvent] = useState(false);
+  const [exported, setExported]               = useState(false);
+
+  const handleExport = () => {
+    downloadJson(backupFilename(event.name), serializeEvents([event]));
+  };
+  const handleCopyEvent = async () => {
+    const ok = await copyToClipboard(serializeEvents([event]));
+    if (ok) { setExported(true); setTimeout(() => setExported(false), 2000); }
+  };
 
   const dateLabel = new Date(event.date + 'T12:00:00').toLocaleDateString('en-CA', {
     weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
@@ -110,8 +121,22 @@ export function EventScreen({
           ))
         )}
 
-        {/* Delete event */}
-        <div className="pt-6 pb-2 flex justify-center">
+        {/* Export / delete event */}
+        <div className="pt-6 pb-2 flex flex-col items-center gap-3">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleExport}
+              className="text-xs font-medium text-slate-500 hover:text-purple-300 transition cursor-pointer"
+            >
+              ⬇ Export event
+            </button>
+            <button
+              onClick={handleCopyEvent}
+              className="text-xs font-medium text-slate-500 hover:text-purple-300 transition cursor-pointer"
+            >
+              {exported ? '✓ Copied' : '⧉ Copy JSON'}
+            </button>
+          </div>
           <button
             onClick={() => setConfirmDelEvent(true)}
             className="text-xs font-medium text-slate-600 hover:text-red-400 transition cursor-pointer"
