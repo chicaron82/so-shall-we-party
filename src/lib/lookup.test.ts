@@ -4,11 +4,12 @@ import type { Event, TicketBatch } from '../types';
 
 // ── Builders ──────────────────────────────────────────────────────────────────
 
-function range(label: string, start: number, end: number, prize?: string): TicketBatch {
-  return { id: label, label, type: 'range', rangeStart: start, rangeEnd: end, prize };
+// `id` doubles as a human-readable handle in these tests (assertions check batch.id).
+function range(id: string, start: number, end: number, prize?: string): TicketBatch {
+  return { id, type: 'range', rangeStart: start, rangeEnd: end, prize };
 }
-function card(label: string, number: number, prize?: string): TicketBatch {
-  return { id: label, label, type: 'card', number, prize };
+function card(id: string, number: number, prize?: string): TicketBatch {
+  return { id, type: 'card', number, prize };
 }
 function event(batches: TicketBatch[]): Event {
   return { id: 'e1', name: 'Test', date: '2026-05-31', batches, draws: [], createdAt: '2026-05-31T00:00:00' };
@@ -31,7 +32,7 @@ describe('lookupTicket', () => {
   it('finds a number inside a range', () => {
     const r = lookupTicket(e, '12345');
     expect(r.found).toBe(true);
-    expect(r.batch?.label).toBe('yello');
+    expect(r.batch?.id).toBe('yello');
     expect(r.matchedNumber).toBe(12345);
   });
 
@@ -48,7 +49,7 @@ describe('lookupTicket', () => {
   it('matches a card number exactly and trims whitespace', () => {
     const r = lookupTicket(e, '  7 ');
     expect(r.found).toBe(true);
-    expect(r.batch?.label).toBe('Golden');
+    expect(r.batch?.id).toBe('Golden');
   });
 
   it('does not match a near-but-wrong card number', () => {
@@ -57,7 +58,7 @@ describe('lookupTicket', () => {
 
   it('picks the correct batch when several exist', () => {
     const multi = event([range('A', 100, 199), range('B', 200, 299)]);
-    expect(lookupTicket(multi, '250').batch?.label).toBe('B');
+    expect(lookupTicket(multi, '250').batch?.id).toBe('B');
   });
 });
 
@@ -76,7 +77,7 @@ describe('getDrawStage — basics', () => {
     expect(s.type).toBe('winner');
     if (s.type === 'winner') {
       expect(s.number).toBe(12345);
-      expect(s.batch.label).toBe('yello');
+      expect(s.batch.id).toBe('yello');
     }
   });
 
@@ -148,7 +149,7 @@ describe('getDrawStage — eliminated & possible', () => {
     expect(getDrawStage('1', e).type).toBe('possible');
     const s = getDrawStage('15', e);
     expect(s.type).toBe('identified');
-    if (s.type === 'identified') expect(s.batch.label).toBe('B');
+    if (s.type === 'identified') expect(s.batch.id).toBe('B');
   });
 });
 
@@ -201,14 +202,14 @@ describe('getDrawStage — batch scoping', () => {
   it('unscoped: "122" is intercepted as a Door Prize winner mid-type', () => {
     const s = getDrawStage('122', e);
     expect(s.type).toBe('winner');
-    if (s.type === 'winner') expect(s.batch.label).toBe('Texas Mickey');
+    if (s.type === 'winner') expect(s.batch.id).toBe('Texas Mickey');
   });
 
   it('scoped to the Booze Wagon: "122" reads as "getting closer", not a winner', () => {
     const s = getDrawStage('122', e, booze.id);
     expect(s.type).toBe('identified');
     if (s.type === 'identified') {
-      expect(s.batch.label).toBe('liquor');
+      expect(s.batch.id).toBe('liquor');
       expect(s.digitsLeft).toBe(2);
     }
   });
@@ -216,13 +217,13 @@ describe('getDrawStage — batch scoping', () => {
   it('scoped to the Booze Wagon: the full number wins', () => {
     const s = getDrawStage('12221', e, booze.id);
     expect(s.type).toBe('winner');
-    if (s.type === 'winner') expect(s.batch.label).toBe('liquor');
+    if (s.type === 'winner') expect(s.batch.id).toBe('liquor');
   });
 
   it('scoped to the single-ticket Door Prize: "122" wins cleanly', () => {
     const s = getDrawStage('122', e, door.id);
     expect(s.type).toBe('winner');
-    if (s.type === 'winner') expect(s.batch.label).toBe('Texas Mickey');
+    if (s.type === 'winner') expect(s.batch.id).toBe('Texas Mickey');
   });
 
   it('scoped: a number outside the chosen batch is eliminated, not matched elsewhere', () => {

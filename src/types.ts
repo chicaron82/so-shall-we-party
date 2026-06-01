@@ -2,7 +2,7 @@ export type BatchType = 'range' | 'card';
 
 export interface TicketBatch {
   id: string;
-  label: string;
+  notes?: string; // optional free text — prize info, e.g. "winner picks any bottle"
   type: BatchType;
   prize?: string;
   // range batch
@@ -17,8 +17,9 @@ export interface DrawnTicket {
   number: number;
   drawnAt: string;
   batchId: string;
-  batchLabel: string;
+  batchName: string;  // auto display name captured at draw time (batch may change later)
   prize?: string;
+  notes?: string;
   claimed: boolean;
 }
 

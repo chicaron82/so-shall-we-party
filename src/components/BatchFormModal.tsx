@@ -28,7 +28,7 @@ const PRIZE_ACTIVE: Record<string, string> = {
 export function BatchFormModal({ initial, onSubmit, onClose }: Props) {
   const editing = !!initial;
   const [type, setType]       = useState<BatchType>(initial?.type ?? 'range');
-  const [label, setLabel]     = useState(initial?.label ?? '');
+  const [notes, setNotes]     = useState(initial?.notes ?? '');
   const [prize, setPrize]     = useState(initial?.prize ?? '');
   const [rangeStart, setStart] = useState(initial?.rangeStart != null ? String(initial.rangeStart) : '');
   const [rangeEnd, setEnd]     = useState(initial?.rangeEnd != null ? String(initial.rangeEnd) : '');
@@ -37,18 +37,18 @@ export function BatchFormModal({ initial, onSubmit, onClose }: Props) {
 
   const handleSubmit = () => {
     setError('');
-    if (!label.trim()) { setError('Label is required.'); return; }
+    const notesVal = notes.trim() || undefined;
 
     if (type === 'range') {
       const start = parseInt(rangeStart, 10);
       const end   = parseInt(rangeEnd, 10);
       if (isNaN(start) || isNaN(end)) { setError('Enter valid start and end numbers.'); return; }
       if (end < start) { setError('End must be ≥ start.'); return; }
-      onSubmit({ type, label: label.trim(), prize: prize || undefined, rangeStart: start, rangeEnd: end });
+      onSubmit({ type, notes: notesVal, prize: prize || undefined, rangeStart: start, rangeEnd: end });
     } else {
       const number = parseInt(cardNum, 10);
       if (isNaN(number)) { setError('Enter a valid card number.'); return; }
-      onSubmit({ type, label: label.trim(), prize: prize || undefined, number });
+      onSubmit({ type, notes: notesVal, prize: prize || undefined, number });
     }
     onClose();
   };
@@ -81,17 +81,6 @@ export function BatchFormModal({ initial, onSubmit, onClose }: Props) {
               {t === 'range' ? 'Range Batch' : 'Card Style'}
             </button>
           ))}
-        </div>
-
-        {/* Label */}
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-slate-400">Label</label>
-          <input
-            className={inputCls}
-            placeholder='e.g. Batch 1, Blue, Golden Ticket'
-            value={label}
-            onChange={e => setLabel(e.target.value)}
-          />
         </div>
 
         {/* Prize presets */}
@@ -134,6 +123,17 @@ export function BatchFormModal({ initial, onSubmit, onClose }: Props) {
             <p className="text-[11px] text-slate-600">The single number printed across the sheet (e.g. silent-auction tickets).</p>
           </div>
         )}
+
+        {/* Notes (optional) */}
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-slate-400">Notes <span className="text-slate-600">(optional)</span></label>
+          <input
+            className={inputCls}
+            placeholder="Prize info — e.g. winner picks any bottle"
+            value={notes}
+            onChange={e => setNotes(e.target.value)}
+          />
+        </div>
 
         {error && <p className="text-xs text-red-400">{error}</p>}
 

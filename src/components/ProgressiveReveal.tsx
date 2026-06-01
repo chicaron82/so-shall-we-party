@@ -5,6 +5,7 @@ import { prizeBadgeClass, prizeEmoji } from '../lib/prizeStyle';
 interface Props {
   input: string;
   stage: DrawStage;
+  batchName?: string; // auto display name of the staged batch (identified/winner)
   onChange: (val: string) => void;
   onConfirmWinner: () => void;
   onNoMatch: () => void;
@@ -28,7 +29,7 @@ function identifiedConfig(digitsLeft: number, guaranteed: boolean) {
   return               { border: 'border-yellow-400',  glow: 'animate-neon-gold',  label: 'Getting closer... 🔥🔥',         labelColor: 'text-yellow-300' };
 }
 
-export function ProgressiveReveal({ input, stage, onChange, onConfirmWinner, onNoMatch }: Props) {
+export function ProgressiveReveal({ input, stage, batchName, onChange, onConfirmWinner, onNoMatch }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { inputRef.current?.focus(); }, []);
@@ -87,11 +88,12 @@ export function ProgressiveReveal({ input, stage, onChange, onConfirmWinner, onN
             : 'bg-[#1e1f2b] border-[#2a2b38]'
         }`}>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-slate-200">{batch.label}</span>
-            {batch.prize && (
-              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${prizeBadgeClass(batch.prize)}`}>
-                {prizeEmoji(batch.prize)} {batch.prize}
+            {batch.prize ? (
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${prizeBadgeClass(batch.prize)}`}>
+                {prizeEmoji(batch.prize)} {batchName}
               </span>
+            ) : (
+              <span className="text-sm font-bold text-slate-200">{batchName}</span>
             )}
           </div>
           {batch.type === 'range' && (
@@ -109,11 +111,12 @@ export function ProgressiveReveal({ input, stage, onChange, onConfirmWinner, onN
             #{stage.number}
           </p>
           <div className="flex items-center justify-center gap-2 flex-wrap">
-            <span className="text-sm font-bold text-slate-200">{stage.batch.label}</span>
-            {stage.batch.prize && (
+            {stage.batch.prize ? (
               <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${prizeBadgeClass(stage.batch.prize)}`}>
-                {prizeEmoji(stage.batch.prize)} {stage.batch.prize}
+                {prizeEmoji(stage.batch.prize)} {batchName}
               </span>
+            ) : (
+              <span className="text-sm font-bold text-slate-200">{batchName}</span>
             )}
           </div>
           <button

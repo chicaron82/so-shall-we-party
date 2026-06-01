@@ -4,6 +4,7 @@ import { BatchFormModal } from './BatchFormModal';
 import { EventFormModal } from './EventFormModal';
 import { ConfirmDialog } from './ConfirmDialog';
 import { prizeBadgeClass, prizeEmoji } from '../lib/prizeStyle';
+import { batchDisplayName } from '../lib/batchName';
 
 interface Props {
   event: Event;
@@ -91,19 +92,16 @@ export function EventScreen({
                 onClick={() => setEditingBatch(batch)}
                 className="flex-1 text-left cursor-pointer min-w-0"
               >
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-bold text-slate-100">{batch.label}</p>
-                  {batch.prize && (
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${prizeBadgeClass(batch.prize)}`}>
-                      {prizeEmoji(batch.prize)} {batch.prize}
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-slate-500 mt-0.5">{batchSummary(batch)}</p>
+                <span className={`inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full border ${
+                  batch.prize ? prizeBadgeClass(batch.prize) : 'bg-[#1e1f2b] text-slate-300 border-[#2a2b38]'
+                }`}>
+                  {batch.prize ? `${prizeEmoji(batch.prize)} ` : ''}{batchDisplayName(batch, event.batches)}
+                </span>
+                <p className="text-xs text-slate-500 mt-1">{batchSummary(batch)}</p>
               </button>
               <button
                 onClick={() => setDeletingBatch(batch)}
-                aria-label={`Delete ${batch.label}`}
+                aria-label={`Delete ${batchDisplayName(batch, event.batches)}`}
                 className="text-slate-600 hover:text-red-400 transition text-lg cursor-pointer ml-3 shrink-0"
               >
                 ×
@@ -159,7 +157,7 @@ export function EventScreen({
       {deletingBatch && (
         <ConfirmDialog
           title="Delete batch?"
-          message={`"${deletingBatch.label}" (${batchSummary(deletingBatch)}) will be removed.`}
+          message={`"${batchDisplayName(deletingBatch, event.batches)}" (${batchSummary(deletingBatch)}) will be removed.`}
           onConfirm={() => { onDeleteBatch(event.id, deletingBatch.id); setDeletingBatch(null); }}
           onCancel={() => setDeletingBatch(null)}
         />

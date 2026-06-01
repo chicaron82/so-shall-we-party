@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { DrawnTicket, Event } from '../types';
 import { getDrawStage } from '../lib/lookup';
 import { prizeBadgeClass, prizeEmoji } from '../lib/prizeStyle';
+import { batchDisplayName } from '../lib/batchName';
 import { ProgressiveReveal } from './ProgressiveReveal';
 
 interface Props {
@@ -24,13 +25,18 @@ export function DrawScreen({ event, onAddDraw, onMarkClaimed, onBack }: Props) {
     setInput(''); // reset the in-progress number when the prize on the line changes
   };
 
+  const stageBatchName = stage.type === 'identified' || stage.type === 'winner'
+    ? batchDisplayName(stage.batch, event.batches)
+    : undefined;
+
   const handleConfirmWinner = () => {
     if (stage.type !== 'winner') return;
     onAddDraw(event.id, {
       number: stage.number,
       batchId: stage.batch.id,
-      batchLabel: stage.batch.label,
+      batchName: batchDisplayName(stage.batch, event.batches),
       prize: stage.batch.prize,
+      notes: stage.batch.notes,
     });
     setInput('');
   };
@@ -73,7 +79,7 @@ export function DrawScreen({ event, onAddDraw, onMarkClaimed, onBack }: Props) {
           {event.batches.map(b => (
             <ScopePill
               key={b.id}
-              label={`${b.prize ? prizeEmoji(b.prize) + ' ' : ''}${b.label}`}
+              label={`${b.prize ? prizeEmoji(b.prize) + ' ' : ''}${batchDisplayName(b, event.batches)}`}
               active={scopeBatchId === b.id}
               onClick={() => selectScope(b.id)}
             />
@@ -86,6 +92,7 @@ export function DrawScreen({ event, onAddDraw, onMarkClaimed, onBack }: Props) {
         <ProgressiveReveal
           input={input}
           stage={stage}
+          batchName={stageBatchName}
           onChange={setInput}
           onConfirmWinner={handleConfirmWinner}
           onNoMatch={handleNoMatch}
@@ -121,11 +128,10 @@ export function DrawScreen({ event, onAddDraw, onMarkClaimed, onBack }: Props) {
         <div className="space-y-1">
           {event.batches.map(b => (
             <div key={b.id} className="flex items-center justify-between text-xs text-slate-600">
-              <span className="font-medium text-slate-500">{b.label}</span>
-              <span>
-                {b.type === 'range' ? `#${b.rangeStart}–${b.rangeEnd}` : `Card #${b.number}`}
-                {b.prize && <span className="ml-2">{prizeEmoji(b.prize)} {b.prize}</span>}
+              <span className="font-medium text-slate-500">
+                {b.prize ? `${prizeEmoji(b.prize)} ` : ''}{batchDisplayName(b, event.batches)}
               </span>
+              <span>{b.type === 'range' ? `#${b.rangeStart}–${b.rangeEnd}` : `Card #${b.number}`}</span>
             </div>
           ))}
         </div>
@@ -162,11 +168,12 @@ function WinnerRow({ draw, onToggleClaimed }: { draw: DrawnTicket; onToggleClaim
           </span>
           {draw.prize && (
             <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${prizeBadgeClass(draw.prize)}`}>
-              {prizeEmoji(draw.prize)} {draw.prize}
+              {prizeEmoji(draw.prize)} {draw.batchName}
             </span>
           )}
         </div>
-        <p className="text-xs text-slate-500 mt-0.5 truncate">{draw.batchLabel} · {time}</p>
+        {draw.notes && <p className="text-xs text-slate-400 mt-1 truncate">{draw.notes}</p>}
+        <p className="text-xs text-slate-500 mt-0.5 truncate">{!draw.prize ? draw.batchName + ' · ' : ''}{time}</p>
       </div>
       <button
         onClick={onToggleClaimed}

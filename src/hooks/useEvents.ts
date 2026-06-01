@@ -7,7 +7,14 @@ function uid(): string {
 }
 
 function normalise(e: Event): Event {
-  return { ...e, draws: e.draws ?? [] };
+  // Migrate legacy batches: the old required `label` becomes optional `notes`.
+  const batches = (e.batches ?? []).map(b => {
+    const legacy = b as TicketBatch & { label?: string };
+    return legacy.notes == null && legacy.label != null
+      ? { ...b, notes: legacy.label }
+      : b;
+  });
+  return { ...e, batches, draws: e.draws ?? [] };
 }
 
 export function useEvents() {
