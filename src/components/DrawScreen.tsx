@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import type { DrawnTicket, Event } from '../types';
-import { getDrawStage } from '../lib/lookup';
+import type { DrawnTicket, Event, TicketBatch } from '../types';
+import { getDrawStage, isDuplicateRangeDraw } from '../lib/lookup';
 import { prizeBadgeClass, prizeEmoji } from '../lib/prizeStyle';
 import { batchDisplayName } from '../lib/batchName';
 import { ProgressiveReveal } from './ProgressiveReveal';
+import { ConfirmDialog } from './ConfirmDialog';
 
 interface Props {
   event: Event;
@@ -15,6 +16,7 @@ interface Props {
 export function DrawScreen({ event, onAddDraw, onMarkClaimed, onBack }: Props) {
   const [input, setInput] = useState('');
   const [scopeBatchId, setScopeBatchId] = useState<string | null>(null);
+  const [dupWarn, setDupWarn] = useState<{ number: number; batchId: string; label: string } | null>(null);
 
   const stage = getDrawStage(input, event, scopeBatchId ?? undefined);
   const draws = event.draws ?? [];
@@ -29,16 +31,32 @@ export function DrawScreen({ event, onAddDraw, onMarkClaimed, onBack }: Props) {
     ? batchDisplayName(stage.batch, event.batches)
     : undefined;
 
-  const handleConfirmWinner = () => {
-    if (stage.type !== 'winner') return;
+  const commitWinner = (number: number, batch: TicketBatch) => {
     onAddDraw(event.id, {
-      number: stage.number,
-      batchId: stage.batch.id,
-      batchName: batchDisplayName(stage.batch, event.batches),
-      prize: stage.batch.prize,
-      notes: stage.batch.notes,
+      number,
+      batchId: batch.id,
+      batchName: batchDisplayName(batch, event.batches),
+      prize: batch.prize,
+      notes: batch.notes,
     });
     setInput('');
+  };
+
+  const handleConfirmWinner = () => {
+    if (stage.type !== 'winner') return;
+    const { number, batch } = stage;
+    if (isDuplicateRangeDraw(event, batch.id, number)) {
+      setDupWarn({ number, batchId: batch.id, label: batchDisplayName(batch, event.batches) });
+      return;
+    }
+    commitWinner(number, batch);
+  };
+
+  const confirmDuplicate = () => {
+    if (!dupWarn) return;
+    const batch = event.batches.find(b => b.id === dupWarn.batchId);
+    if (batch) commitWinner(dupWarn.number, batch);
+    setDupWarn(null);
   };
 
   const handleNoMatch = () => {
@@ -136,6 +154,16 @@ export function DrawScreen({ event, onAddDraw, onMarkClaimed, onBack }: Props) {
           ))}
         </div>
       </div>
+
+      {dupWarn && (
+        <ConfirmDialog
+          title="Already drawn"
+          message={`#${dupWarn.number} was already drawn for ${dupWarn.label}. Log it again?`}
+          confirmLabel="Log Anyway"
+          onConfirm={confirmDuplicate}
+          onCancel={() => setDupWarn(null)}
+        />
+      )}
     </div>
   );
 }

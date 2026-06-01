@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { lookupTicket, getDrawStage } from './lookup';
-import type { Event, TicketBatch } from '../types';
+import { lookupTicket, getDrawStage, isDuplicateRangeDraw } from './lookup';
+import type { DrawnTicket, Event, TicketBatch } from '../types';
 
 // ── Builders ──────────────────────────────────────────────────────────────────
 
@@ -230,5 +230,34 @@ describe('getDrawStage — batch scoping', () => {
     // 122 is a valid Door Prize, but scoped to Booze Wagon it must NOT win.
     const s = getDrawStage('999', e, booze.id);
     expect(s.type).toBe('eliminated');
+  });
+});
+
+// ── isDuplicateRangeDraw ────────────────────────────────────────────────────────
+
+describe('isDuplicateRangeDraw', () => {
+  const draw = (number: number, batchId: string): DrawnTicket => ({
+    id: `d-${number}`, number, batchId, batchName: '', drawnAt: '2026-05-31T00:00:00', claimed: false,
+  });
+
+  it('flags a range number already drawn for the same batch', () => {
+    const e = { ...event([yello]), draws: [draw(12345, 'yello')] };
+    expect(isDuplicateRangeDraw(e, 'yello', 12345)).toBe(true);
+  });
+
+  it('does not flag a different number in the same batch', () => {
+    const e = { ...event([yello]), draws: [draw(12345, 'yello')] };
+    expect(isDuplicateRangeDraw(e, 'yello', 12346)).toBe(false);
+  });
+
+  it('never flags card batches — repeat card wins are legitimate', () => {
+    const golden = card('Golden', 7);
+    const e = { ...event([golden]), draws: [draw(7, 'Golden')] };
+    expect(isDuplicateRangeDraw(e, 'Golden', 7)).toBe(false);
+  });
+
+  it('returns false for an unknown batch id', () => {
+    const e = { ...event([yello]), draws: [draw(12345, 'yello')] };
+    expect(isDuplicateRangeDraw(e, 'ghost', 12345)).toBe(false);
   });
 });

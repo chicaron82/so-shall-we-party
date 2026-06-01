@@ -19,6 +19,19 @@ export function lookupTicket(event: Event, input: string): LookupResult {
   return { found: false };
 }
 
+// ── Duplicate guard ───────────────────────────────────────────────────────────
+
+/**
+ * True if this exact number was already logged as a winner for a *range* batch.
+ * Card batches are excluded — the same card number printed many times means
+ * repeat wins are legitimate. Used to soft-warn before a likely fat-finger.
+ */
+export function isDuplicateRangeDraw(event: Event, batchId: string, number: number): boolean {
+  const batch = event.batches.find(b => b.id === batchId);
+  if (!batch || batch.type !== 'range') return false;
+  return (event.draws ?? []).some(d => d.batchId === batchId && d.number === number);
+}
+
 // ── Progressive reveal ────────────────────────────────────────────────────────
 
 export type DrawStage =
