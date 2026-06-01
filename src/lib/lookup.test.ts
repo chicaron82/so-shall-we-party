@@ -189,3 +189,45 @@ describe('getDrawStage — near-miss', () => {
     expect(getDrawStage('9', event([card('Golden', 7)])).type).toBe('eliminated');
   });
 });
+
+// ── getDrawStage — scoping (the prefix-interception fix) ────────────────────────
+
+describe('getDrawStage — batch scoping', () => {
+  // Door Prize #122 is a prefix of Booze Wagon #12221–12240.
+  const door  = range('Texas Mickey', 122, 122, 'Door Prize');
+  const booze = range('liquor', 12221, 12240, 'Booze Wagon');
+  const e = event([door, booze]);
+
+  it('unscoped: "122" is intercepted as a Door Prize winner mid-type', () => {
+    const s = getDrawStage('122', e);
+    expect(s.type).toBe('winner');
+    if (s.type === 'winner') expect(s.batch.label).toBe('Texas Mickey');
+  });
+
+  it('scoped to the Booze Wagon: "122" reads as "getting closer", not a winner', () => {
+    const s = getDrawStage('122', e, booze.id);
+    expect(s.type).toBe('identified');
+    if (s.type === 'identified') {
+      expect(s.batch.label).toBe('liquor');
+      expect(s.digitsLeft).toBe(2);
+    }
+  });
+
+  it('scoped to the Booze Wagon: the full number wins', () => {
+    const s = getDrawStage('12221', e, booze.id);
+    expect(s.type).toBe('winner');
+    if (s.type === 'winner') expect(s.batch.label).toBe('liquor');
+  });
+
+  it('scoped to the single-ticket Door Prize: "122" wins cleanly', () => {
+    const s = getDrawStage('122', e, door.id);
+    expect(s.type).toBe('winner');
+    if (s.type === 'winner') expect(s.batch.label).toBe('Texas Mickey');
+  });
+
+  it('scoped: a number outside the chosen batch is eliminated, not matched elsewhere', () => {
+    // 122 is a valid Door Prize, but scoped to Booze Wagon it must NOT win.
+    const s = getDrawStage('999', e, booze.id);
+    expect(s.type).toBe('eliminated');
+  });
+});

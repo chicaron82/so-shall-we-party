@@ -62,14 +62,26 @@ function prefixIsGuaranteed(prefix: string, batch: TicketBatch): boolean {
   return lo >= start && hi <= end;
 }
 
-export function getDrawStage(input: string, event: Event): DrawStage {
+/**
+ * Compute the live draw stage for the current input.
+ *
+ * `scopeBatchId` narrows matching to a single batch — essential when one
+ * batch's number is a prefix of (or equal to) another's. e.g. a Door Prize
+ * at #122 would otherwise intercept a Booze Wagon draw mid-type at "122".
+ * Caller picks the batch they're drawing for; only that batch is considered.
+ */
+export function getDrawStage(input: string, event: Event, scopeBatchId?: string): DrawStage {
   const prefix = input.trim();
   if (!prefix) return { type: 'idle' };
+
+  const batches = scopeBatchId
+    ? event.batches.filter(b => b.id === scopeBatchId)
+    : event.batches;
 
   // Winner check first — full number exact match
   const num = parseInt(prefix, 10);
   if (!isNaN(num)) {
-    for (const batch of event.batches) {
+    for (const batch of batches) {
       if (batch.type === 'range') {
         if (num >= (batch.rangeStart ?? 0) && num <= (batch.rangeEnd ?? 0)) {
           return { type: 'winner', batch, number: num };
@@ -81,12 +93,12 @@ export function getDrawStage(input: string, event: Event): DrawStage {
   }
 
   // Prefix scan
-  const candidates = event.batches.filter(b => prefixCanMatch(prefix, b));
+  const candidates = batches.filter(b => prefixCanMatch(prefix, b));
 
   if (candidates.length === 0) {
     // Near-miss: complete number entry within 5 of a range boundary
     if (!isNaN(num)) {
-      for (const batch of event.batches) {
+      for (const batch of batches) {
         if (batch.type !== 'range') continue;
         if (prefix.length !== expectedDigits(batch)) continue;
         const start = batch.rangeStart ?? 0;

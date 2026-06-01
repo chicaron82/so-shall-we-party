@@ -13,10 +13,16 @@ interface Props {
 
 export function DrawScreen({ event, onAddDraw, onMarkClaimed, onBack }: Props) {
   const [input, setInput] = useState('');
+  const [scopeBatchId, setScopeBatchId] = useState<string | null>(null);
 
-  const stage = getDrawStage(input, event);
+  const stage = getDrawStage(input, event, scopeBatchId ?? undefined);
   const draws = event.draws ?? [];
   const unclaimed = draws.filter(d => !d.claimed).length;
+
+  const selectScope = (id: string | null) => {
+    setScopeBatchId(id);
+    setInput(''); // reset the in-progress number when the prize on the line changes
+  };
 
   const handleConfirmWinner = () => {
     if (stage.type !== 'winner') return;
@@ -53,6 +59,26 @@ export function DrawScreen({ event, onAddDraw, onMarkClaimed, onBack }: Props) {
             {unclaimed} outstanding
           </span>
         )}
+      </div>
+
+      {/* Scope selector — which prize are we calling? */}
+      <div className="px-4 pb-3">
+        <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-2 px-1">Drawing for</p>
+        <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+          <ScopePill
+            label="All"
+            active={scopeBatchId === null}
+            onClick={() => selectScope(null)}
+          />
+          {event.batches.map(b => (
+            <ScopePill
+              key={b.id}
+              label={`${b.prize ? prizeEmoji(b.prize) + ' ' : ''}${b.label}`}
+              active={scopeBatchId === b.id}
+              onClick={() => selectScope(b.id)}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Progressive entry */}
@@ -105,6 +131,21 @@ export function DrawScreen({ event, onAddDraw, onMarkClaimed, onBack }: Props) {
         </div>
       </div>
     </div>
+  );
+}
+
+function ScopePill({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border whitespace-nowrap transition cursor-pointer ${
+        active
+          ? 'bg-purple-600 border-purple-500 text-white'
+          : 'bg-[#16171f] border-[#2a2b38] text-slate-400 hover:border-purple-700'
+      }`}
+    >
+      {label}
+    </button>
   );
 }
 
