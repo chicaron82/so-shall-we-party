@@ -8,9 +8,8 @@ export interface TicketBatch {
   // range batch
   rangeStart?: number;
   rangeEnd?: number;
-  // card batch
+  // card batch (silent-auction sheet — one number, printed many times; count is irrelevant to the draw)
   number?: number;
-  quantity?: number;
 }
 
 export interface DrawnTicket {

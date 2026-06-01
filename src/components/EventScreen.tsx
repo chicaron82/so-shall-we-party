@@ -18,8 +18,7 @@ interface Props {
 
 function batchSummary(b: TicketBatch): string {
   if (b.type === 'range') return `#${b.rangeStart} – #${b.rangeEnd}`;
-  const q = b.quantity && b.quantity > 1 ? ` · ${b.quantity} cards` : '';
-  return `Card #${b.number}${q}`;
+  return `Card #${b.number}`;
 }
 
 export function EventScreen({

@@ -33,7 +33,6 @@ export function BatchFormModal({ initial, onSubmit, onClose }: Props) {
   const [rangeStart, setStart] = useState(initial?.rangeStart != null ? String(initial.rangeStart) : '');
   const [rangeEnd, setEnd]     = useState(initial?.rangeEnd != null ? String(initial.rangeEnd) : '');
   const [cardNum, setCardNum]  = useState(initial?.number != null ? String(initial.number) : '');
-  const [qty, setQty]          = useState(initial?.quantity != null ? String(initial.quantity) : '');
   const [error, setError]      = useState('');
 
   const handleSubmit = () => {
@@ -47,10 +46,9 @@ export function BatchFormModal({ initial, onSubmit, onClose }: Props) {
       if (end < start) { setError('End must be ≥ start.'); return; }
       onSubmit({ type, label: label.trim(), prize: prize || undefined, rangeStart: start, rangeEnd: end });
     } else {
-      const number   = parseInt(cardNum, 10);
-      const quantity = parseInt(qty, 10);
+      const number = parseInt(cardNum, 10);
       if (isNaN(number)) { setError('Enter a valid card number.'); return; }
-      onSubmit({ type, label: label.trim(), prize: prize || undefined, number, quantity: isNaN(quantity) ? 1 : quantity });
+      onSubmit({ type, label: label.trim(), prize: prize || undefined, number });
     }
     onClose();
   };
@@ -130,15 +128,10 @@ export function BatchFormModal({ initial, onSubmit, onClose }: Props) {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-400">Card Number</label>
-              <input type="number" className={inputCls} placeholder="007" value={cardNum} onChange={e => setCardNum(e.target.value)} />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-400">Qty <span className="text-slate-600">(optional)</span></label>
-              <input type="number" className={inputCls} placeholder="10" value={qty} onChange={e => setQty(e.target.value)} />
-            </div>
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-slate-400">Card Number</label>
+            <input type="number" className={inputCls} placeholder="0001" value={cardNum} onChange={e => setCardNum(e.target.value)} />
+            <p className="text-[11px] text-slate-600">The single number printed across the sheet (e.g. silent-auction tickets).</p>
           </div>
         )}
 
