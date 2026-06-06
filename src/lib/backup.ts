@@ -56,7 +56,7 @@ export function validateEvent(x: unknown): Event | null {
   const rawDraws = Array.isArray(x.draws) ? x.draws : [];
   const draws = rawDraws.map(validateDraw).filter((d): d is DrawnTicket => d !== null);
 
-  return { ...(x as Event), batches, draws };
+  return { ...(x as unknown as Event), batches, draws };
 }
 
 function validateEvents(arr: unknown): Event[] {
@@ -76,8 +76,8 @@ export function parseBackup(raw: string): ParseResult {
   }
 
   // Wrapped shape: { version, exportedAt, events }
-  if (isObj(data) && Array.isArray((data as Backup).events)) {
-    const events = validateEvents((data as Backup).events);
+  if (isObj(data) && Array.isArray((data as unknown as Backup).events)) {
+    const events = validateEvents((data as unknown as Backup).events);
     if (events.length === 0) return { error: 'No valid events found in the backup.' };
     return { events };
   }
