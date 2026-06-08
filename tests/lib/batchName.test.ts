@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { batchDisplayName } from './batchName';
-import type { TicketBatch } from '../types';
+import { batchDisplayName } from '../../src/lib/batchName';
+import type { TicketBatch } from '../../src/types';
 
 function b(id: string, prize?: string): TicketBatch {
   return { id, type: 'range', rangeStart: 1, rangeEnd: 10, prize };

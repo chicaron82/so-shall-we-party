@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { lookupTicket, getDrawStage, isDuplicateRangeDraw } from './lookup';
-import type { DrawnTicket, Event, TicketBatch } from '../types';
+import { lookupTicket, getDrawStage, isDuplicateRangeDraw } from '../../src/lib/lookup';
+import type { DrawnTicket, Event, TicketBatch } from '../../src/types';
 
 // ── Builders ──────────────────────────────────────────────────────────────────
 

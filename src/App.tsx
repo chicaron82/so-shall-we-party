@@ -3,6 +3,7 @@ import { useEvents } from './hooks/useEvents';
 import { HomeScreen } from './components/HomeScreen';
 import { EventScreen } from './components/EventScreen';
 import { DrawScreen } from './components/DrawScreen';
+import { AppErrorBoundary } from './components/AppErrorBoundary';
 import type { Event } from './types';
 
 type Screen = 'home' | 'event' | 'draw';
@@ -27,34 +28,36 @@ export default function App() {
 
   return (
     <div className="max-w-md mx-auto">
-      {screen === 'home' && (
-        <HomeScreen
-          events={events}
-          onCreate={createEvent}
-          onSelect={selectEvent}
-          onImport={importEvents}
-        />
-      )}
-      {screen === 'event' && currentEvent && (
-        <EventScreen
-          event={currentEvent}
-          onAddBatch={addBatch}
-          onUpdateBatch={updateBatch}
-          onDeleteBatch={deleteBatch}
-          onUpdateEvent={updateEvent}
-          onDeleteEvent={deleteEvent}
-          onDraw={() => setScreen('draw')}
-          onBack={() => setScreen('home')}
-        />
-      )}
-      {screen === 'draw' && currentEvent && (
-        <DrawScreen
-          event={currentEvent}
-          onAddDraw={addDraw}
-          onMarkClaimed={markClaimed}
-          onBack={() => setScreen('event')}
-        />
-      )}
+      <AppErrorBoundary>
+        {screen === 'home' && (
+          <HomeScreen
+            events={events}
+            onCreate={createEvent}
+            onSelect={selectEvent}
+            onImport={importEvents}
+          />
+        )}
+        {screen === 'event' && currentEvent && (
+          <EventScreen
+            event={currentEvent}
+            onAddBatch={addBatch}
+            onUpdateBatch={updateBatch}
+            onDeleteBatch={deleteBatch}
+            onUpdateEvent={updateEvent}
+            onDeleteEvent={deleteEvent}
+            onDraw={() => setScreen('draw')}
+            onBack={() => setScreen('home')}
+          />
+        )}
+        {screen === 'draw' && currentEvent && (
+          <DrawScreen
+            event={currentEvent}
+            onAddDraw={addDraw}
+            onMarkClaimed={markClaimed}
+            onBack={() => setScreen('event')}
+          />
+        )}
+      </AppErrorBoundary>
     </div>
   );
 }

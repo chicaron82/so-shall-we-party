@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { serializeEvents, parseBackup, validateEvent, mergeEvents } from './backup';
-import type { Event } from '../types';
+import { serializeEvents, parseBackup, validateEvent, mergeEvents } from '../../src/lib/backup';
+import type { Event } from '../../src/types';
 
 function event(over: Partial<Event> = {}): Event {
   return {

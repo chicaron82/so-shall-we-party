@@ -4,7 +4,7 @@ import { mergeEvents } from '../lib/backup';
 import type { DrawnTicket, Event, TicketBatch } from '../types';
 
 function uid(): string {
-  return Math.random().toString(36).slice(2, 10);
+  return crypto.randomUUID();
 }
 
 function normalise(e: Event): Event {
