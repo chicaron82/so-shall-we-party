@@ -4,6 +4,7 @@ import { HomeScreen } from './components/HomeScreen';
 import { EventScreen } from './components/EventScreen';
 import { DrawScreen } from './components/DrawScreen';
 import { AppErrorBoundary } from './components/AppErrorBoundary';
+import { BuildStamp } from './components/BuildStamp';
 import type { Event } from './types';
 
 type Screen = 'home' | 'event' | 'draw';
@@ -58,6 +59,7 @@ export default function App() {
           />
         )}
       </AppErrorBoundary>
+      <BuildStamp />
     </div>
   );
 }
